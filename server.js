@@ -5,7 +5,9 @@ const path = require('path');
 const { Readable } = require('stream');
 
 const PORT = process.env.PORT || 3000;
-const DB_FILE = path.join(__dirname, 'data', 'db.json');
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
+const DB_FILE = path.join(DATA_DIR, 'db.json');
+fs.mkdirSync(DATA_DIR, { recursive: true });   // the folder is not in git, so create it on first run
 const UA = 'Mozilla/5.0 (IPTV-WebPlayer MVP)';
 
 // ---------- tiny JSON "database" ----------

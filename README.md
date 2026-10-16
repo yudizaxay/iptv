@@ -198,6 +198,8 @@ For a long-running service, use a process manager such as [pm2](https://pm2.keym
 
 Users and saved sources live in `data/db.json`. Many hosts erase the disk on restart or redeploy, so use a persistent disk, or move storage to a real database, before real users rely on it.
 
+To keep the data on a mounted disk, set the `DATA_DIR` environment variable to that disk's path (for example `DATA_DIR=/var/data`). The folder is created automatically.
+
 ---
 
 ## 🔌 API
