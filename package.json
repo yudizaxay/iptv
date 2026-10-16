@@ -1,0 +1,12 @@
+{
+  "name": "iptv-web-player",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": { "start": "node server.js" },
+  "dependencies": {
+    "express": "^4.19.2",
+    "hls.js": "^1.5.15",
+    "mpegts.js": "^1.7.3"
+  }
+}

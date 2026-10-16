@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IPTV Web Player</title>
+<meta name="description" content="Watch your IPTV channels in the browser. Xtream and M3U supported.">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/favicon.svg">
+<meta name="theme-color" content="#0f1220">
+<script>
+  // Set the theme before first paint so there is no flash
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('theme'); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Shared icons -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-logo" viewBox="0 0 64 64">
+    <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5b7bff"/><stop offset="1" stop-color="#8a4dff"/></linearGradient></defs>
+    <path d="M22 9l10 9 10-9" fill="none" stroke="#5b7bff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="5" y="17" width="54" height="40" rx="11" fill="url(#lg)"/>
+    <rect x="11" y="23" width="42" height="28" rx="6" fill="#0f1220"/>
+    <path d="M28 30.5v13l11-6.5z" fill="#fff"/>
+    <rect x="11" y="47" width="7" height="4" fill="#ffd23f"/><rect x="18" y="47" width="7" height="4" fill="#2ee6c5"/><rect x="25" y="47" width="7" height="4" fill="#4cd964"/><rect x="32" y="47" width="7" height="4" fill="#ff4fb0"/><rect x="39" y="47" width="7" height="4" fill="#ff5a4f"/><rect x="46" y="47" width="7" height="4" fill="#4f6bff"/>
+  </symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2.5v2.4M12 19.1v2.4M2.5 12h2.4M19.1 12h2.4M5.3 5.3l1.7 1.7M17 17l1.7 1.7M18.7 5.3L17 7M7 17l-1.7 1.7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 16l4.5 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M14.5 5.5L8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-server" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="3" y="13" width="18" height="7" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="7" cy="7.5" r="1" fill="currentColor"/><circle cx="7" cy="16.5" r="1" fill="currentColor"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="4" cy="6" r="1.2" fill="currentColor"/><circle cx="4" cy="12" r="1.2" fill="currentColor"/><circle cx="4" cy="18" r="1.2" fill="currentColor"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 7V4.5h4V7M6.5 7l1 13h9l1-13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-out" viewBox="0 0 24 24"><path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4M15 8l4 4-4 4M19 12H9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+
+<!-- Sign in -->
+<section id="auth" class="auth hidden">
+  <button class="icon-btn theme-toggle auth-theme" type="button" aria-label="Switch colour theme" title="Switch theme">
+    <svg class="ic-sun"><use href="#i-sun"/></svg><svg class="ic-moon"><use href="#i-moon"/></svg>
+  </button>
+
+  <div class="auth-art" aria-hidden="true">
+    <div class="tv">
+      <svg class="antenna" viewBox="0 0 120 70"><path d="M60 66L28 8M60 66L92 8" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/><circle cx="28" cy="8" r="5" fill="currentColor"/><circle cx="92" cy="8" r="5" fill="currentColor"/></svg>
+      <div class="tv-body">
+        <div class="tv-screen">
+          <div class="bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="scan"></div>
+          <div class="tv-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor"/></svg></div>
+        </div>
+        <div class="tv-side"><span class="knob"></span><span class="knob"></span><span class="grille"></span></div>
+      </div>
+      <div class="tv-feet"><i></i><i></i></div>
+    </div>
+    <h1>Your channels,<br>in any browser.</h1>
+    <p>Connect an Xtream account or an M3U playlist and start watching. Nothing to install.</p>
+  </div>
+
+  <form id="authForm" class="auth-form">
+    <div class="logo"><svg><use href="#i-logo"/></svg><span>IPTV <b>Player</b></span></div>
+    <h2 id="authTitle">Sign in</h2>
+    <label class="field"><span>Username</span>
+      <input id="aUser" placeholder="Enter your username" autocomplete="username" required></label>
+    <label class="field"><span>Password</span>
+      <input id="aPass" type="password" placeholder="Enter your password" autocomplete="current-password" required></label>
+    <button class="primary" type="submit" id="authBtn">Sign in</button>
+    <p class="err" id="authErr" role="alert"></p>
+    <p class="switch"><a href="#" id="authToggle">Create an account</a></p>
+    <p class="demo">Want a look first? Sign in with <code>demo</code> / <code>demo123</code></p>
+  </form>
+</section>
+
+<!-- Source picker -->
+<section id="sources" class="sources hidden">
+  <header class="top">
+    <div class="logo"><svg><use href="#i-logo"/></svg><span>IPTV <b>Player</b></span></div>
+    <div class="grow"></div>
+    <span class="who"><span id="whoami"></span></span>
+    <button class="icon-btn theme-toggle" type="button" aria-label="Switch colour theme" title="Switch theme">
+      <svg class="ic-sun"><use href="#i-sun"/></svg><svg class="ic-moon"><use href="#i-moon"/></svg>
+    </button>
+    <button id="logout" class="ghost"><svg><use href="#i-out"/></svg><span>Log out</span></button>
+  </header>
+  <main class="wrap">
+    <div class="page-head">
+      <div>
+        <h2>Your connections</h2>
+        <p>Pick a provider to open its channels, or add a new one on the right.</p>
+      </div>
+      <div class="bot-wrap" aria-hidden="true">
+        <div class="bubble" id="botSay">Hi! Pick a connection and press play.</div>
+        <svg class="bot" id="bot" viewBox="0 0 160 170">
+          <ellipse cx="80" cy="162" rx="40" ry="6" class="b-shadow"/>
+          <g class="b-ant"><line x1="80" y1="22" x2="80" y2="8" stroke="var(--accent)" stroke-width="4" stroke-linecap="round"/><circle cx="80" cy="7" r="6" class="b-led"/></g>
+          <g class="b-arm-l"><rect x="14" y="92" width="14" height="40" rx="7" class="b-metal"/></g>
+          <g class="b-arm-r"><rect x="132" y="92" width="14" height="40" rx="7" class="b-metal"/><circle cx="139" cy="136" r="9" class="b-hand"/></g>
+          <rect x="38" y="88" width="84" height="62" rx="20" class="b-body"/>
+          <rect x="52" y="104" width="56" height="8" rx="4" fill="#fff" opacity=".25"/>
+          <circle cx="62" cy="128" r="5" fill="#ffd23f"/><circle cx="80" cy="128" r="5" fill="#2ee6c5"/><circle cx="98" cy="128" r="5" fill="#ff4fb0"/>
+          <rect x="24" y="22" width="112" height="72" rx="26" class="b-head"/>
+          <rect x="36" y="34" width="88" height="48" rx="18" class="b-face"/>
+          <g class="b-eyes">
+            <g class="b-eye" data-cx="62" data-cy="58"><circle cx="62" cy="58" r="11" fill="#fff"/><circle class="pupil" cx="62" cy="58" r="5" fill="#0f1220"/></g>
+            <g class="b-eye" data-cx="98" data-cy="58"><circle cx="98" cy="58" r="11" fill="#fff"/><circle class="pupil" cx="98" cy="58" r="5" fill="#0f1220"/></g>
+          </g>
+          <path d="M70 74q10 7 20 0" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="46" cy="72" r="5" fill="#ff4fb0" opacity=".45"/><circle cx="114" cy="72" r="5" fill="#ff4fb0" opacity=".45"/>
+        </svg>
+      </div>
+    </div>
+    <section class="panel saved">
+      <div class="panel-head"><h3>Saved connections</h3><span class="badge" id="srcCount"></span></div>
+      <label class="searchbox filter hidden" id="srcFilterBox"><svg><use href="#i-search"/></svg>
+        <input id="srcFilter" placeholder="Filter connections" aria-label="Filter connections"></label>
+      <div id="srcList" class="srcList"></div>
+    </section>
+
+    <form id="srcForm" class="panel panel-form">
+      <h3>Add a connection</h3>
+      <div class="tabs" role="tablist">
+        <button type="button" data-mode="xtream" class="tab active" role="tab">Xtream login</button>
+        <button type="button" data-mode="m3u" class="tab" role="tab">M3U URL</button>
+      </div>
+      <label class="field"><span>Name <em>(optional)</em></span>
+        <input id="sName" placeholder="e.g. Living room"></label>
+      <label class="field"><span id="urlLabel">Server URL</span>
+        <input id="sUrl" placeholder="Server URL  e.g. http://server.example.com:8080" required></label>
+      <div id="xtreamFields" class="two">
+        <label class="field"><span>Username</span><input id="sUser" placeholder="Username"></label>
+        <label class="field"><span>Password</span><input id="sPass" type="password" autocomplete="off" placeholder="Password / passcode"></label>
+      </div>
+      <div class="actions">
+        <button class="primary" type="submit" id="srcBtn">Save &amp; open</button>
+        <button type="button" id="useDemo" class="ghost">Fill in the demo account</button>
+      </div>
+      <p class="err" id="srcErr" role="alert"></p>
+      <div class="tip" id="srcTip"></div>
+    </form>
+  </main>
+</section>
+
+<!-- Player -->
+<section id="player" class="player hidden">
+  <header class="top">
+    <button id="back" class="ghost"><svg><use href="#i-back"/></svg><span>Connections</span></button>
+    <div class="logo"><svg><use href="#i-logo"/></svg><span>IPTV <b>Player</b></span></div>
+    <div class="grow"></div>
+    <label class="searchbox"><svg><use href="#i-search"/></svg>
+      <input id="search" placeholder="Search channels" aria-label="Search channels"></label>
+    <button class="icon-btn theme-toggle" type="button" aria-label="Switch colour theme" title="Switch theme">
+      <svg class="ic-sun"><use href="#i-sun"/></svg><svg class="ic-moon"><use href="#i-moon"/></svg>
+    </button>
+  </header>
+  <div class="layout">
+    <aside class="groups" id="groups"></aside>
+    <div class="list" id="channels"></div>
+    <div class="stage">
+      <div class="video">
+        <video id="video" controls autoplay playsinline></video>
+        <div id="overlay" class="overlay">Select a channel to start watching</div>
+      </div>
+      <div class="now"><b id="nowName">—</b><span id="nowGroup" class="muted"></span><button id="fav" class="hidden" aria-label="Toggle favourite">☆</button></div>
+    </div>
+  </div>
+</section>
+
+<div id="loading" class="loading hidden"><div class="loader"><i></i><i></i><i></i><i></i><i></i></div><span>Loading channels…</span></div>
+
+<script src="/vendor/hls/hls.min.js"></script>
+<script src="/vendor/mpegts/mpegts.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
